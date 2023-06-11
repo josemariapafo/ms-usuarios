@@ -4,7 +4,9 @@ import com.portafolio.msusuario.domain.Experiences;
 import com.portafolio.msusuario.domain.Skill;
 import com.portafolio.msusuario.domain.User;
 import com.portafolio.msusuario.services.UsuarioService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,8 +38,14 @@ public class UsuarioController {
         return ResponseEntity.ok().body(usuarioService.obtenerExperiences());
     }
 
+
+    @CircuitBreaker(name="msExperienciaCB", fallbackMethod = "fallBackGetExperiencias")
     @GetMapping("/experiencias/{userId}")
     public ResponseEntity<List<Experiences>> obtenerSkillsPorUsuarioNombre(@PathVariable Long userId) {
         return ResponseEntity.ok().body(usuarioService.obtenerTodasLasExperienciasPorUsuarioID(userId));
+    }
+
+    private ResponseEntity<List<Experiences>> fallBackGetExperiencias(@PathVariable Long userId, RuntimeException exception) {
+        return new ResponseEntity("No se ha podido obtener las experiencias, servicio no disponible", HttpStatus.SERVICE_UNAVAILABLE);
     }
 }
